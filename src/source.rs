@@ -60,18 +60,19 @@ pub fn script_json(html: &str, id: &str) -> Result<Value> {
 }
 
 // Returns the key that matches a store across sources: its domain, or else
-// its name, without the TLD.
+// its name, without the TLD, spaces and punctuation.
 pub fn merchant(url: Option<&str>, name: &str) -> String {
     let key = url.and_then(domain).unwrap_or_else(|| name.to_lowercase());
-    match key.rsplit_once('.') {
+    let key = match key.rsplit_once('.') {
         // Keeps names like "E.ON" and "J. Lindeberg" whole.
         Some((rest, tld))
             if rest.len() > 1 && tld.len() > 1 && tld.chars().all(|c| c.is_ascii_alphabetic()) =>
         {
-            rest.into()
+            rest
         }
-        _ => key,
-    }
+        _ => &key,
+    };
+    key.chars().filter(|c| c.is_alphanumeric()).collect()
 }
 
 // Returns the bare host of a URL, or None if it isn't a domain.
