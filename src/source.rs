@@ -41,6 +41,13 @@ impl Http {
     }
 }
 
+// Logs a store that failed to parse and skips it.
+pub fn keep(source: &str, offer: Result<Offer>) -> Option<Offer> {
+    offer
+        .inspect_err(|e| eprintln!("{source}: skipped: {e:#}"))
+        .ok()
+}
+
 pub fn script_json(html: &str, id: &str) -> Result<Value> {
     let json = html
         .split_once(&format!(r#"<script id="{id}""#))

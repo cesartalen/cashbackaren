@@ -1,4 +1,4 @@
-use super::{Http, Source, domain};
+use super::{Http, Source, domain, keep};
 use crate::offer::{Kind, Offer};
 use anyhow::{Context, Result, ensure};
 use serde_json::Value;
@@ -19,10 +19,8 @@ fn fetch(http: &Http) -> Result<Vec<Offer>> {
         let total = page["total"].as_u64().context("no total")? as usize;
         let stores = page["stores"].as_array().context("no stores")?;
         ensure!(!stores.is_empty(), "offset {offset} is empty");
-        for s in stores {
-            offers.push(offer(s)?);
-        }
-        if offers.len() >= total {
+        offers.extend(stores.iter().filter_map(|s| keep(SOURCE.name, offer(s))));
+        if offset + stores.len() >= total {
             break;
         }
     }

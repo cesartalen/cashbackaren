@@ -1,4 +1,4 @@
-use super::{Http, Source, domain, script_json};
+use super::{Http, Source, domain, keep, script_json};
 use crate::offer::{Kind, Offer};
 use anyhow::{Context, Result, ensure};
 use serde_json::Value;
@@ -14,28 +14,30 @@ pub const SOURCE: Source = Source {
 
 fn fetch(http: &Http) -> Result<Vec<Offer>> {
     let mut offers = Vec::new();
+    let mut seen = 0;
     for page in 1.. {
-        let (found, total) = parse(&http.get(&format!("{URL}{page}"))?)?;
-        ensure!(!found.is_empty(), "page {page} is empty");
-        offers.extend(found);
-        if offers.len() >= total {
+        let payload = script_json(&http.get(&format!("{URL}{page}"))?, "initial_payload")?;
+        let (stores, total) = listing(&payload)?;
+        ensure!(!stores.is_empty(), "page {page} is empty");
+        seen += stores.len();
+        offers.extend(stores.iter().filter_map(|s| keep(SOURCE.name, offer(s))));
+        if seen >= total {
             break;
         }
     }
     Ok(offers)
 }
 
-// Returns the page's offers and the site's total.
-fn parse(html: &str) -> Result<(Vec<Offer>, usize)> {
-    let payload = script_json(html, "initial_payload")?;
-    let page = payload["__DEHYDRATED_QUERY_STATE__"]["queries"]
+// Returns the page's stores and the site's total.
+fn listing(payload: &Value) -> Result<(&Vec<Value>, usize)> {
+    let listing = payload["__DEHYDRATED_QUERY_STATE__"]["queries"]
         .as_array()
         .and_then(|qs| qs.iter().find(|q| q["queryKey"][0] == "STORE_DIRECTORY_LISTING"))
         .map(|q| &q["state"]["data"]["pages"][0])
         .context("no store listing")?;
-    let total = page["totalHits"].as_u64().context("no totalHits")? as usize;
-    let stores = page["stores"].as_array().context("no stores")?;
-    Ok((stores.iter().map(offer).collect::<Result<_>>()?, total))
+    let total = listing["totalHits"].as_u64().context("no totalHits")? as usize;
+    let stores = listing["stores"].as_array().context("no stores")?;
+    Ok((stores, total))
 }
 
 fn offer(s: &Value) -> Result<Offer> {
