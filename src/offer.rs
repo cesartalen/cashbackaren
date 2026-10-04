@@ -2,6 +2,8 @@
 pub enum Kind {
     Percent,
     Fixed,
+    Points,
+    FixedPoints,
 }
 
 impl Kind {
@@ -9,6 +11,8 @@ impl Kind {
         match self {
             Kind::Percent => "percent",
             Kind::Fixed => "fixed",
+            Kind::Points => "points",
+            Kind::FixedPoints => "fixed_points",
         }
     }
 }
@@ -19,7 +23,8 @@ pub struct Offer {
     pub merchant: String,
     pub name: String,
     pub kind: Kind,
-    // Basis points for Percent, öre for Fixed.
+    // Basis points for Percent, öre for Fixed, points per 100 kr for Points,
+    // points for FixedPoints.
     pub amount: i64,
     pub up_to: bool,
     pub category: Option<String>,

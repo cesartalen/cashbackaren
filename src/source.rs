@@ -1,5 +1,6 @@
 mod klarna;
 mod refunder;
+mod sas;
 
 use crate::offer::Offer;
 use anyhow::{Context, Result};
@@ -15,7 +16,7 @@ pub struct Source {
 }
 
 // One module per site; register it here.
-pub const ALL: &[Source] = &[klarna::SOURCE, refunder::SOURCE];
+pub const ALL: &[Source] = &[klarna::SOURCE, refunder::SOURCE, sas::SOURCE];
 
 const USER_AGENT: &str = concat!(
     "cashbackaren/",
