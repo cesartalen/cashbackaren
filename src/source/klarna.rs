@@ -1,4 +1,4 @@
-use super::{Http, Source, domain, keep, script_json};
+use super::{Http, Source, keep, merchant, script_json};
 use crate::offer::{Kind, Offer};
 use anyhow::{Context, Result, ensure};
 use serde_json::Value;
@@ -43,11 +43,9 @@ fn listing(payload: &Value) -> Result<(&Vec<Value>, usize)> {
 fn offer(s: &Value) -> Result<Offer> {
     let name = s["displayName"].as_str().context("no displayName")?;
     let cashback = &s["cashbackDiscount"];
-    let merchant = s["otcUrl"].as_str().and_then(|u| u.split_once("merchantUrl="));
+    let site = s["otcUrl"].as_str().and_then(|u| u.split_once("merchantUrl="));
     Ok(Offer {
-        merchant: merchant
-            .and_then(|(_, u)| domain(u))
-            .unwrap_or_else(|| name.to_lowercase()),
+        merchant: merchant(site.map(|(_, u)| u), name),
         name: name.into(),
         kind: Kind::Percent,
         amount: cashback["discountPercentage"]

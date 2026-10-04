@@ -19,7 +19,7 @@ impl Kind {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Offer {
-    // The store's domain, shared across sources.
+    // The store's domain or name without the TLD, shared across sources.
     pub merchant: String,
     pub name: String,
     pub kind: Kind,

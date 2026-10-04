@@ -1,4 +1,4 @@
-use super::{Http, Source, keep};
+use super::{Http, Source, keep, merchant};
 use crate::offer::{Kind, Offer};
 use anyhow::{Context, Result, bail};
 use serde_json::Value;
@@ -42,7 +42,7 @@ fn offer(s: &Value, categories: &HashMap<i64, &str>) -> Result<Offer> {
     };
     let points = |key| s[key].as_i64().filter(|&p| p > 0);
     Ok(Offer {
-        merchant: name.to_lowercase(),
+        merchant: merchant(None, name),
         name: name.into(),
         kind,
         // A campaign replaces the regular points.

@@ -59,8 +59,23 @@ pub fn script_json(html: &str, id: &str) -> Result<Value> {
     Ok(serde_json::from_str(json)?)
 }
 
+// Returns the key that matches a store across sources: its domain, or else
+// its name, without the TLD.
+pub fn merchant(url: Option<&str>, name: &str) -> String {
+    let key = url.and_then(domain).unwrap_or_else(|| name.to_lowercase());
+    match key.rsplit_once('.') {
+        // Keeps names like "E.ON" and "J. Lindeberg" whole.
+        Some((rest, tld))
+            if rest.len() > 1 && tld.len() > 1 && tld.chars().all(|c| c.is_ascii_alphabetic()) =>
+        {
+            rest.into()
+        }
+        _ => key,
+    }
+}
+
 // Returns the bare host of a URL, or None if it isn't a domain.
-pub fn domain(url: &str) -> Option<String> {
+fn domain(url: &str) -> Option<String> {
     let url = url.trim().to_lowercase();
     let host = url.split_once("://").map_or(url.as_str(), |(_, s)| s);
     let host = host.split(['/', '?', '&']).next()?.trim_start_matches("www.");

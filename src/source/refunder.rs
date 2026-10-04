@@ -1,4 +1,4 @@
-use super::{Http, Source, domain, keep};
+use super::{Http, Source, keep, merchant};
 use crate::offer::{Kind, Offer};
 use anyhow::{Context, Result, ensure};
 use serde_json::Value;
@@ -33,10 +33,7 @@ fn offer(s: &Value) -> Result<Offer> {
     let (kind, amount, up_to) =
         rate(cashback).with_context(|| format!("bad cashback {cashback:?} for {name}"))?;
     Ok(Offer {
-        merchant: s["domain"]
-            .as_str()
-            .and_then(domain)
-            .unwrap_or_else(|| name.to_lowercase()),
+        merchant: merchant(s["domain"].as_str(), name),
         name: name.into(),
         kind,
         amount,
