@@ -43,7 +43,9 @@ fn offer(s: &Value) -> Result<Offer> {
     let cashback = &s["cashbackDiscount"];
     let merchant = s["otcUrl"].as_str().and_then(|u| u.split_once("merchantUrl="));
     Ok(Offer {
-        merchant: merchant.map_or_else(|| name.to_lowercase(), |(_, u)| domain(u)),
+        merchant: merchant
+            .and_then(|(_, u)| domain(u))
+            .unwrap_or_else(|| name.to_lowercase()),
         name: name.into(),
         kind: Kind::Percent,
         amount: cashback["discountPercentage"]

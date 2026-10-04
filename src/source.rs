@@ -1,4 +1,5 @@
 mod klarna;
+mod refunder;
 
 use crate::offer::Offer;
 use anyhow::{Context, Result};
@@ -14,7 +15,7 @@ pub struct Source {
 }
 
 // One module per site; register it here.
-pub const ALL: &[Source] = &[klarna::SOURCE];
+pub const ALL: &[Source] = &[klarna::SOURCE, refunder::SOURCE];
 
 const USER_AGENT: &str = concat!(
     "cashbackaren/",
@@ -50,8 +51,10 @@ pub fn script_json(html: &str, id: &str) -> Result<Value> {
     Ok(serde_json::from_str(json)?)
 }
 
-pub fn domain(url: &str) -> String {
-    let host = url.split_once("://").map_or(url, |(_, s)| s);
-    let host = host.split(['/', '?', '&']).next().unwrap_or(host);
-    host.to_lowercase().trim_start_matches("www.").into()
+// Returns the bare host of a URL, or None if it isn't a domain.
+pub fn domain(url: &str) -> Option<String> {
+    let url = url.trim().to_lowercase();
+    let host = url.split_once("://").map_or(url.as_str(), |(_, s)| s);
+    let host = host.split(['/', '?', '&']).next()?.trim_start_matches("www.");
+    (host.contains('.') && !host.contains(' ')).then(|| host.into())
 }
